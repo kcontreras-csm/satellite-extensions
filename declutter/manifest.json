@@ -1,17 +1,11 @@
 {
   "name": "Case Page Declutter",
-  "version": "1.2.0",
+  "version": "2.1.0",
   "author": "Daniela",
-  "description": "Hides the Target Orgs card and the Information Hub / Knowledge panel on Case record pages, and widens the main column when the right sidebar ends up empty.",
+  "description": "Makes sidebar cards collapsible and lets each sidebar fold into a narrow strip so the middle column gets the space. Collapsed items keep their names, and every choice is remembered.",
   "matches": ["*://orgcs.lightning.force.com/*"],
   "js": ["content.js"],
   "run_at": "document_idle",
   "world": "isolated",
-  "permissions": [],
-  "settings": [
-    { "key": "hideTargetOrgs", "type": "boolean", "title": "Hide Target Orgs card", "default": true },
-    { "key": "hideInformationHub", "type": "boolean", "title": "Hide Information Hub / Knowledge panel", "default": true },
-    { "key": "collapseRightColumn", "type": "boolean", "title": "Widen the page when the right sidebar is empty", "default": true },
-    { "key": "debug", "type": "boolean", "title": "Show debug info", "default": false }
-  ]
+  "permissions": ["storage"]
 }
