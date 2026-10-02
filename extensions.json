@@ -3,6 +3,9 @@
   "version": 1,
   "extensions": [
     {
+      "id": "declutter"
+    },
+    {
       "id": "hello-badge"
     },
     {
