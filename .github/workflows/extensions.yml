@@ -1,0 +1,54 @@
+name: Extensions
+
+# Validates every extension's manifest and keeps extensions.json (the list Satellite reads) up to date.
+#   - Pull requests: validate only. Problems show up as annotations on the manifest.
+#   - Pushes to main: validate, regenerate extensions.json and commit it if it changed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One run at a time per branch, so two quick pushes can't race to commit extensions.json.
+concurrency:
+  group: extensions-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  extensions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # On a push, start from the newest commit of the branch (it may include an earlier run's commit).
+          ref: ${{ github.event_name == 'push' && github.ref_name || '' }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate extensions and generate extensions.json
+        run: python3 scripts/generate_extensions.py
+
+      - name: Show what changed
+        if: github.event_name == 'pull_request'
+        run: |
+          git status --short -- extensions.json
+          echo "extensions.json is regenerated automatically after the pull request is merged."
+
+      - name: Commit the updated extensions.json
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ -z "$(git status --porcelain -- extensions.json)" ]; then
+            echo "extensions.json is already up to date."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add extensions.json
+            git commit -m "Update extensions.json"
+            git push
+          fi
