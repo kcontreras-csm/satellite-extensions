@@ -29,7 +29,7 @@ NUMBER = r"(?:0|[1-9][0-9]{0,8})"
 SEMVER_RE = re.compile(r"^(%s)\.(%s)\.(%s)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z.-]+)?$" % (NUMBER, NUMBER, NUMBER))
 PARTIAL_RE = re.compile(r"^(%s)(?:\.(%s))?(?:\.(%s))?(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$" % (NUMBER, NUMBER, NUMBER))
 
-PERMISSIONS = {"storage", "notifications", "open-external", "ui"}
+PERMISSIONS = {"storage", "notifications", "open-external", "ui", "salesforce"}
 KINDS = {"content-script", "library"}
 RUN_AT = {"document_start", "document_end", "document_idle"}
 WORLDS = {"isolated", "main"}
