@@ -1,0 +1,15 @@
+{
+  "$schema": ".satellite/manifest.schema.json",
+  "name": "Customer Sentiment Analysis",
+  "version": "0.3.0",
+  "author": "Kevin Alexis Contreras",
+  "description": "Shows a customer sentiment indicator on OrgCS Case and Contact pages, based on the contact's recent survey scores and case escalations. Click it for the surveys and escalations behind it.",
+  "icon": "icon.png",
+  "license": "MIT",
+  "matches": ["*://orgcs.lightning.force.com/*"],
+  "js": ["content.js"],
+  "css": ["analysis-button.css"],
+  "run_at": "document_idle",
+  "world": "isolated",
+  "permissions": ["salesforce"]
+}

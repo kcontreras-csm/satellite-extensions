@@ -1,0 +1,84 @@
+#sentiment-indicator {
+    z-index: 1000;
+    display: block;
+    position: fixed;
+    right: 0px;
+    top: 75px;
+}
+
+#sentiment-indicator .sentiment-btn-avg {
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #fff;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    box-shadow: -2px 0 2px black;
+    cursor: pointer;
+}
+
+/* Replaces the Chrome version's images/error.png (Satellite extensions have no file URLs). */
+#sentiment-indicator .sentiment-btn-error {
+    background-color: white;
+}
+
+#sentiment-indicator .sentiment-btn-last {
+    width: 15px;
+    height: 15px;
+    z-index: 1002;
+    border-width: 1px;
+    border-style: solid;
+    border-color: white;
+}
+
+#sentiment-indicator .sentiment-btn-escalation {
+    width: 15px;
+    height: 15px;
+    z-index: 1002;
+    border-width: 1px;
+    border-style: solid;
+    border-color: white;
+    position: relative;
+    left: 15px;
+    top: -15px;
+    background-color: #ff7f00;
+}
+
+#sentiment-table-pop-up {
+    z-index: 1004;
+    display: block;
+    position: fixed;
+    top: 75px;
+    right: 42px;
+}
+
+.white-border {
+    background-color: white;
+}
+
+.sentiment-table-heading {
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 10px 10px 10px 2px
+}
+
+table[class="sentiment-table-data"],
+th[class="sentiment-table-data"],
+td[class="sentiment-table-data"] {
+    border: 2px solid black;
+    padding: 5px;
+}
+
+.table-close-btn {
+    cursor: pointer;
+    color: red;
+    background-color: transparent;
+}
+
+.table-root {
+    background-color: white;
+    padding: 4px;
+    border-style: groove;
+}
