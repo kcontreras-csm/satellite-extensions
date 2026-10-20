@@ -3,6 +3,9 @@
   "version": 1,
   "extensions": [
     {
+      "id": "customer-sentinent-analysis"
+    },
+    {
       "id": "declutter"
     },
     {
