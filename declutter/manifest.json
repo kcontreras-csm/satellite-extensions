@@ -1,10 +1,10 @@
 {
   "name": "Case Page Declutter",
-  "version": "2.1.0",
-  "author": "Daniela",
-  "description": "Makes sidebar cards collapsible and lets each sidebar fold into a narrow strip so the middle column gets the space. Collapsed items keep their names, and every choice is remembered.",
+  "version": "2.3.0",
+  "author": "Daniela & Alex",
+  "description": "Hides the Case icon, makes sidebar cards and columns collapsible, adds console tab controls, and shows the case description below the highlights.",
   "matches": ["*://orgcs.lightning.force.com/*"],
-  "js": ["content.js"],
+  "js": ["content.js", "tabs.js", "description.js"],
   "run_at": "document_idle",
   "world": "isolated",
   "permissions": ["storage"]

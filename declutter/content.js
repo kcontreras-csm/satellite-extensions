@@ -1,4 +1,4 @@
-// Case Page Declutter v2.1: collapsible sidebar cards (vertical) and
+// Case Page Declutter v2.3.0: hides the case icon, collapsible sidebar cards (vertical) and
 // collapsible sidebars (horizontal). Collapsed items keep their names, and
 // every choice is remembered across cases, console tabs and reloads.
 
@@ -456,11 +456,28 @@ function syncTemplate(template) {
   }
 }
 
+// ---- case heading -------------------------------------------------------
+
+function hideCaseIcon(highlights) {
+  // Identify Case panels from their subject component, not a record title or ID.
+  if (!highlights.querySelector('support-output-case-subject-field[slot="primaryField"]')) return;
+  const scope = highlights.shadowRoot || highlights;
+  // Hide only the icon. The Case label and subject (.slds-media__body, its
+  // sibling) stay, along with the action buttons, translation control,
+  // secondary fields and the custom Description block.
+  const icon = scope.querySelector('.primaryFieldRow > .slds-has-flexi-truncate > .slds-media');
+  if (icon && (icon.style.getPropertyValue('display') !== 'none' ||
+               icon.style.getPropertyPriority('display') !== 'important')) {
+    icon.style.setProperty('display', 'none', 'important');
+  }
+}
+
 // ---- main scan ----------------------------------------------------------
 
 function scan() {
   const roots = collectRoots();
   for (const root of roots) {
+    for (const highlights of root.querySelectorAll('records-highlights2')) hideCaseIcon(highlights);
     for (const region of root.querySelectorAll(REGION_SELECTOR)) enhance(region);
   }
   for (const root of roots) {
