@@ -1,11 +1,16 @@
 {
   "name": "Case Page Declutter",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "author": "Daniela & Alex",
-  "description": "Hides the Case icon, makes sidebar cards and columns collapsible, adds console tab controls, and shows the case description below the highlights.",
+  "description": "Hides the Case icon and the \"Support Console\" app name (and optionally the org logo), makes sidebar cards and columns collapsible, adds console tab controls, and shows the case description below the highlights.",
   "matches": ["*://orgcs.lightning.force.com/*"],
-  "js": ["content.js", "tabs.js", "description.js"],
+  "js": ["content.js", "tabs.js", "description.js", "branding.js"],
+  "css": ["branding.css"],
   "run_at": "document_idle",
   "world": "isolated",
-  "permissions": ["storage"]
+  "permissions": ["storage"],
+  "settings": [
+    { "key": "hideAppName", "type": "boolean", "title": "Hide the app name (\"Support Console\")", "default": true },
+    { "key": "hideLogo", "type": "boolean", "title": "Hide the org logo in the global header", "default": false }
+  ]
 }

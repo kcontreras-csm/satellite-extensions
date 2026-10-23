@@ -1,0 +1,27 @@
+/* Case Page Declutter: console branding. branding.js sets the classes on <html>
+   from the settings. The app name rules apply unless .sat-show-appname is set,
+   so the name is already hidden before the script runs. */
+
+/* App name next to the App Launcher waffle */
+html:not(.sat-show-appname) .slds-context-bar h1.appName.slds-context-bar__app-name {
+  display: none !important;
+}
+
+/* Let the left nav block shrink to its content instead of keeping a fixed width */
+html:not(.sat-show-appname) .slds-context-bar .navLeft,
+html:not(.sat-show-appname) .slds-context-bar .navLeft .oneConsoleNav,
+html:not(.sat-show-appname) .slds-context-bar .navLeft .slds-context-bar_dropdown-trigger {
+  width: auto !important;
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+/* "Cases" is right-aligned with margin-left: auto; pull it next to the waffle */
+html:not(.sat-show-appname) .slds-context-bar .navLeft .appNavItems .slds-col_bump-left {
+  margin-left: 0 !important;
+}
+
+/* Org logo at the left of the global header */
+html.sat-hide-logo #oneHeader .slds-global-header__logo {
+  display: none !important;
+}
