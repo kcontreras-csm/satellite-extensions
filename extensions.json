@@ -16,6 +16,9 @@
     },
     {
       "id": "shared-utils"
+    },
+    {
+      "id": "ticket-expiration"
     }
   ]
 }
