@@ -1,0 +1,62 @@
+{
+  "$schema": ".satellite/manifest.schema.json",
+  "name": "Ticket Expiration",
+  "version": "0.3.0",
+  "author": "Alexis",
+  "description": "Adds a clock to the OrgCS header that counts the open cases you own whose next follow-up is due, following the team's cadence: Working every 2 days, Need More Information every 3 days with a closure warning after 7 days without a reply, open Structured Investigations every 3 days, high priority daily. Click it for each case's next step and due date; case lists show the due time next to each case number, and your case pages next to Follow.",
+  "icon": "symbol:clock",
+  "matches": ["*:\/\/orgcs.lightning.force.com\/*"],
+  "js": ["followup-core.js", "content.js"],
+  "css": ["style.css"],
+  "run_at": "document_idle",
+  "world": "isolated",
+  "permissions": ["salesforce", "storage", "notifications"],
+  "settings": [
+    {
+      "key": "highPriority",
+      "type": "choice",
+      "title": "High priority (daily follow-up)",
+      "description": "Which severities get a follow-up every day. Escalated cases always do.",
+      "options": [
+        { "value": "sev12", "label": "Severity Level 1 and 2 (Critical, Urgent)" },
+        { "value": "sev123", "label": "Severity Level 1 to 3 (also High)" }
+      ],
+      "default": "sev12"
+    },
+    { "key": "workingDays", "type": "number", "title": "Working: an update every (days)", "default": 2, "min": 1, "max": 14 },
+    { "key": "waitingDays", "type": "number", "title": "Need More Information: follow up every (days)", "default": 3, "min": 1, "max": 14 },
+    {
+      "key": "closeWarningDays",
+      "type": "number",
+      "title": "Need More Information: closure warning after (days without a reply)",
+      "description": "The warning tells the customer the case closes in 48 hours without a reply; 48 hours later the case is due to be closed.",
+      "default": 7,
+      "min": 1,
+      "max": 30
+    },
+    { "key": "siDays", "type": "number", "title": "Open Structured Investigation: a note every (days)", "default": 3, "min": 1, "max": 14 },
+    { "key": "idleDays", "type": "number", "title": "Any other status: activity at least every (days)", "default": 3, "min": 1, "max": 14 },
+    {
+      "key": "skipWeekends",
+      "type": "boolean",
+      "title": "Skip weekends",
+      "description": "Off: days are calendar days, so a case updated on Friday with a 2-day cadence is due on Sunday. On: due dates skip Saturday and Sunday.",
+      "default": false
+    },
+    { "key": "notify", "type": "boolean", "title": "Notify me when a case becomes overdue", "default": true },
+    {
+      "key": "listPills",
+      "type": "boolean",
+      "title": "Show due times in case lists",
+      "description": "A pill next to each of your case numbers in My Open Cases and other case lists. Hover it for the next step.",
+      "default": true
+    },
+    {
+      "key": "casePill",
+      "type": "boolean",
+      "title": "Show the follow-up on your case pages",
+      "description": "A pill in front of Follow on cases you own, with the due time; hover it for the next step, click it for the panel.",
+      "default": true
+    }
+  ]
+}

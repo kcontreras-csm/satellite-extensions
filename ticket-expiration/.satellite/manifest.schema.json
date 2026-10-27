@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Satellite extension manifest",
+  "type": "object",
+  "required": ["name", "version", "author", "description"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "description": "Optional. Must equal the folder name." },
+    "name": { "type": "string", "minLength": 1, "description": "Shown in Settings and the store." },
+    "version": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$", "description": "major.minor.patch. Raise it to publish an update." },
+    "author": {
+      "description": "A name, or an object with name, email and url.",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "email": { "type": "string" }, "url": { "type": "string" } } }
+      ]
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "icon": { "type": "string", "description": "A .png, .jpg or .svg file in this folder, or symbol:<SF Symbol name>." },
+    "homepage": { "type": "string" },
+    "license": { "type": "string" },
+    "category": { "type": "string" },
+    "keywords": { "type": "array", "items": { "type": "string" } },
+    "type": { "enum": ["content-script", "library"], "description": "A library has no matches; other extensions load it with require()." },
+    "dependencies": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Library ids and version ranges, e.g. { \"shared-utils\": \"^1.0.0\" }." },
+    "min_app_version": { "type": "string" },
+    "permissions": {
+      "type": "array", "uniqueItems": true,
+      "items": { "enum": ["storage", "notifications", "open-external", "ui", "shortcuts", "case-assistant", "salesforce"] },
+      "description": "What the satellite API may do. storage, notifications, open-external, ui (change the sidebar), shortcuts (add keyboard shortcuts), salesforce (read-only SOQL as the signed-in user)."
+    },
+    "matches": { "type": "array", "items": { "type": "string" }, "description": "Chrome match patterns, e.g. *://*.example.com/*" },
+    "exclude_matches": { "type": "array", "items": { "type": "string" } },
+    "js": { "type": "array", "items": { "type": "string" }, "description": "Scripts to run on matching pages." },
+    "css": { "type": "array", "items": { "type": "string" }, "description": "Stylesheets to add to matching pages." },
+    "run_at": { "enum": ["document_start", "document_end", "document_idle"] },
+    "all_frames": { "type": "boolean" },
+    "world": { "enum": ["isolated", "main"], "description": "isolated: DOM + the satellite API. main: the page's own JavaScript, no API." },
+    "background": { "type": "string", "description": "A script that runs once at startup with no page open (world must be isolated)." },
+    "settings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "type", "title"],
+        "properties": {
+          "key": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,39}$" },
+          "type": { "enum": ["string", "number", "boolean", "choice"] },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "default": {},
+          "placeholder": { "type": "string" },
+          "options": { "type": "array", "items": { "type": "object", "required": ["value", "label"], "properties": { "value": { "type": "string" }, "label": { "type": "string" } } } },
+          "min": { "type": "number" },
+          "max": { "type": "number" }
+        }
+      }
+    }
+  }
+}
