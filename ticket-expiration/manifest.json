@@ -1,7 +1,7 @@
 {
   "$schema": ".satellite/manifest.schema.json",
   "name": "Ticket Expiration",
-  "version": "0.3.0",
+  "version": "0.4.1",
   "author": "Alexis",
   "description": "Adds a clock to the OrgCS header that counts the open cases you own whose next follow-up is due, following the team's cadence: Working every 2 days, Need More Information every 3 days with a closure warning after 7 days without a reply, open Structured Investigations every 3 days, high priority daily. Click it for each case's next step and due date; case lists show the due time next to each case number, and your case pages next to Follow.",
   "icon": "symbol:clock",

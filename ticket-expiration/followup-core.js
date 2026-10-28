@@ -1,7 +1,7 @@
 // Follow-up rules for open cases, from the team's cadence:
 //   Working: an update every 2 days, progress or a documented blocker.
 //   Need More Information: follow up with the customer every 3 days; after 7 days without a reply, warn that the case
-//   closes in 48 hours; then close it.
+//   closes in 48 hours; then close it. A follow-up from day 6 on counts as that warning.
 //   Open Structured Investigation: a note every 3-4 days confirming the SI is active and the customer knows the status.
 //   High priority: daily, no exceptions.
 //   Anything else: no activity for more than 3 days is a warning sign.
@@ -105,18 +105,24 @@
       const silentSince = latest([a.lastCustomer, a.statusSince]) ?? a.publicTouches[0] ?? a.lastTouch;
       silentDays = Math.max(0, Math.floor((now - silentSince) / DAY));
       const warnAt = add(silentSince, o.closeWarningDays);
-      const warning = a.publicTouches.find(t => t >= warnAt);
+      // The warning can go with the last follow-up before day 7: a public update from a day before it counts as the
+      // warning, so a reply an hour before day 7 isn't asked for again. Closing still waits for both 48 hours after
+      // the warning and 48 hours after day 7.
+      const warnFrom = warnAt - Math.min(DAY, (warnAt - silentSince) / 2);
+      const warning = a.publicTouches.find(t => t >= warnFrom);
       if (warning) {
-        due = warning + o.closeWarningHours * HOUR;
+        due = Math.max(warning, warnAt) + o.closeWarningHours * HOUR;
         action = due <= now
           ? `No reply ${o.closeWarningHours} hours after the closure warning: close the case`
           : 'Closure warning sent: close the case if the customer still doesn’t reply';
       } else {
         const next = add(a.lastPublic ?? silentSince, o.waitingDays);
-        // Once day 7 has passed, the next message is the warning, even when a follow-up was missed before it.
-        if (next >= warnAt || now >= warnAt) {
+        // The follow-up that lands from day 6 on is the warning, and so is the next message once day 6 has passed,
+        // even when a follow-up was missed before it.
+        if (next >= warnFrom || now >= warnFrom) {
           due = Math.min(next, warnAt);
-          action = `${plural(o.closeWarningDays, 'day')} without a reply: tell the customer the case closes in ${o.closeWarningHours} hours without one`;
+          action = `Send the closure warning: the case closes in ${o.closeWarningHours} hours without a reply` +
+            (silentDays ? ` (${plural(silentDays, 'day')} without one)` : '');
         } else {
           due = next;
           action = 'Follow up with the customer' + (silentDays ? ` (${plural(silentDays, 'day')} without a reply)` : '');

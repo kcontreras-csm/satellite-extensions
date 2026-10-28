@@ -18,6 +18,11 @@ const HOST_ATTR = 'data-ticket-expiration';
 const PILL_ATTR = 'data-ticket-expiration-pill';
 const CASE_ATTR = 'data-ticket-expiration-case';
 const PILL_MS = 400;
+// Buttons that save something the rules read (a comment, an email, a status) and Lightning's own refresh buttons.
+const SAVE_LABEL = /^(save\b.*|send|share|post|comment|submit|update|mark\b.*)$/i;
+const REFRESH_LABEL = /^refresh\b/i;
+const ACTIONABLE = 'button, [role="button"], a, input[type="submit"], input[type="button"]';
+const SAVE_DELAYS = [2500, 8000];
 
 // USING SCOPE Mine is "cases I own", the same as the My Open Cases list view.
 const SOQL =
@@ -371,7 +376,7 @@ function rules() {
   return [
     `High priority (${o.highPriority === 'sev123' ? 'Severity 1 to 3' : 'Severity 1 and 2'}, or escalated): daily.`,
     `Open Structured Investigation: a note ${cadence(o.siDays)} confirming it is active and the customer knows the status.`,
-    `Need More Information: follow up with the customer ${cadence(o.waitingDays)}. After ${o.closeWarningDays} days without a reply, warn that the case closes in 48 hours; then close it.`,
+    `Need More Information: follow up with the customer ${cadence(o.waitingDays)}. After ${o.closeWarningDays} days without a reply, warn that the case closes in 48 hours (a follow-up from the day before counts); close it 48 hours after the warning, and not before day ${o.closeWarningDays + 2}.`,
     `Working and New: an update ${cadence(o.workingDays)}, progress or a documented blocker.`,
     `Any other status: activity at least ${cadence(o.idleDays)}.`,
     'A customer reply moves the due date to one day after it.',
@@ -507,6 +512,29 @@ function paintPill(pill, item, now, onCase) {
   }
 }
 
+// MARK: Refresh after you save
+
+// Posting a comment, sending an email or changing the status doesn't reload the page, so a click on a button like
+// that refreshes the cases a moment later (and once more, for slow saves). Lightning's own refresh buttons (the list
+// view's, "Refresh this feed") refresh them right away.
+let refreshTimers = [];
+
+function refreshSoon(delays) {
+  refreshTimers.forEach(clearTimeout);
+  refreshTimers = delays.map(ms => setTimeout(refresh, ms));
+}
+
+function onPageClick(event) {
+  const path = event.composedPath();
+  if (path.some(node => node === host || node === button || node.hasAttribute?.(CASE_ATTR))) return;
+  const target = path.find(node => node.nodeType === 1 && node.matches(ACTIONABLE));
+  // Tabs like "Post" and "Email" only switch the publisher.
+  if (!target || target.getAttribute('role') === 'tab' || target.closest('[role="tablist"]')) return;
+  const label = normalize(target.textContent || target.getAttribute('aria-label') || target.getAttribute('title') || target.value);
+  if (REFRESH_LABEL.test(label)) refreshSoon([0]);
+  else if (SAVE_LABEL.test(label)) refreshSoon(SAVE_DELAYS);
+}
+
 // MARK: Start
 
 if (window.top === window) {
@@ -524,5 +552,6 @@ if (window.top === window) {
     update();
   }, 1000);
   setInterval(() => (Date.now() - state.fetchedAt >= REFRESH_MS ? refresh() : update()), TICK_MS);
+  addEventListener('click', onPageClick, true);
   refresh();
 }
