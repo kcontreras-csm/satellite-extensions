@@ -3,7 +3,7 @@
 // orgcs-remote/satella.js; keep them the same). Satella only relays live messages, so each page keeps the
 // recent ones in storage. Messages carry your OrgCS user name unless you post anonymously; Satella proves
 // each sender's key, which is how your own messages are recognized.
-// The ⚙︎ menu tweaks roundness, notifications and anonymity (also in Settings > Extensions).
+// The ⚙︎ menu tweaks font size, roundness, notifications and anonymity (also in Settings > Extensions).
 // Drag the bubble (or the panel header) to move it; the position is remembered.
 
 if (window.top !== window) return;
@@ -16,7 +16,7 @@ const MAX_LENGTH = 1000;
 const BUBBLE = 44;
 const EDGE = 8;
 
-const config = { roundness: 100, notifications: true, anonymous: false, ...(await satellite.settings.getAll()) };
+const config = { fontSize: 11, roundness: 100, notifications: true, anonymous: false, ...(await satellite.settings.getAll()) };
 let open = (await satellite.storage.get('open')) === true;
 let lastRead = (await satellite.storage.get('lastRead')) || 0;
 let position = (await satellite.storage.get('position')) || null;
@@ -53,53 +53,70 @@ host.style.cssText = 'all:initial!important;position:fixed!important;z-index:214
 const root = host.attachShadow({ mode: 'open' });
 root.innerHTML = `
   <style>
-    :host { --r: 1; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #181818; }
-    * { box-sizing: border-box; font: inherit; }
+    /* Font and color go on the panel and bubble: the host's inline "all: initial !important" beats :host rules. */
+    :host { --r: 1; --fs: 11px; --bg: #13141f; --bg2: #1a1b2a; --line: #262840; --fg: #d7d9e8; --muted: #7d8099; --accent: #8b7bff; }
+    .panel, .bubble { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: var(--fs); line-height: 1.45;
+      color: var(--fg); -webkit-font-smoothing: antialiased; }
+    * { box-sizing: border-box; font: inherit; color: inherit; }
     .bubble { position: relative; width: 44px; height: 44px; border-radius: calc(var(--r) * 50%); border: 0; cursor: grab; touch-action: none;
-      color: #fff; font-size: 22px; line-height: 1; box-shadow: 0 4px 16px #1b1b6040;
-      background: radial-gradient(circle at 30% 25%, #7b7cff, #4a4bdb 55%, #2a2b8f); }
-    .bubble:hover { filter: brightness(1.1); }
-    .badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
-      background: #ea001e; color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+      color: #fff; font-size: 21px !important; line-height: 1; box-shadow: 0 0 0 1px #ffffff1a inset, 0 6px 20px #0d0a3a55;
+      background: radial-gradient(circle at 32% 28%, #9a8cff, #5b46e0 48%, #1d1450); transition: transform .12s, filter .12s; }
+    .bubble:hover { filter: brightness(1.12); transform: scale(1.04); }
+    .badge { position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+      background: #ff4d6a; color: #fff; font-size: 10px !important; font-weight: 700; line-height: 16px; text-align: center; box-shadow: 0 0 0 2px #fff; }
     .dragging, .dragging * { cursor: grabbing !important; user-select: none; }
-    .panel { position: absolute; width: 300px; height: 380px; display: flex; flex-direction: column; overflow: hidden;
-      background: #fff; border: 1px solid #d0d4e4; border-radius: calc(var(--r) * 16px); box-shadow: 0 10px 36px #1b1b6038; }
+    .panel { position: absolute; width: 360px; height: 460px; display: flex; flex-direction: column; overflow: hidden;
+      background: var(--bg); border: 1px solid var(--line); border-radius: calc(var(--r) * 14px); box-shadow: 0 16px 48px #05061366; }
     .panel.up { bottom: 54px; } .panel.down { top: 54px; } .panel.left { left: 0; } .panel.right { right: 0; }
-    header { display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; background: #4a4bdb; color: #fff; cursor: grab; touch-action: none; }
-    header .title { flex: 1; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    header .dot { width: 8px; height: 8px; border-radius: 50%; background: #9aa0b8; }
-    header .dot.live { background: #3be27a; }
-    header button { border: 0; background: transparent; color: #fff; cursor: pointer; padding: 2px 6px; border-radius: calc(var(--r) * 6px); }
-    header button:hover, header button.on { background: #ffffff26; }
-    .log { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: #f6f7fb; }
-    .empty { margin: auto; color: #6b6f85; text-align: center; padding: 0 12px; }
-    .msg { max-width: 85%; align-self: flex-start; }
-    .msg.mine { align-self: flex-end; }
-    .meta { font-size: 11px; color: #6b6f85; margin: 0 4px 1px; }
-    .msg.mine .meta { text-align: right; }
-    .text { padding: 6px 10px; border-radius: calc(var(--r) * 14px); background: #fff; border: 1px solid #e1e3ee; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .msg.mine .text { background: #4a4bdb; border-color: #4a4bdb; color: #fff; }
-    form { display: flex; gap: 6px; padding: 8px; border-top: 1px solid #e1e3ee; }
-    .draft { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid #c9cde0; border-radius: calc(var(--r) * 16px); outline: none; }
-    .draft:focus { border-color: #4a4bdb; }
-    form button, .prefs button { border: 0; border-radius: calc(var(--r) * 16px); padding: 7px 12px; background: #4a4bdb; color: #fff; cursor: pointer; font-weight: 600; }
-    form button:disabled { opacity: .5; cursor: default; }
-    .prefs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; background: #f6f7fb; }
-    .prefs h3 { margin: 0; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #6b6f85; }
+    header { display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 6px 0 12px; border-bottom: 1px solid var(--line);
+      cursor: grab; touch-action: none; user-select: none; }
+    header .title { flex: 1; font-weight: 650; letter-spacing: .01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    header .chan { color: var(--muted); font-weight: 500; margin-left: 4px; }
+    header .dot { width: 6px; height: 6px; border-radius: 50%; background: #565970; flex: none; }
+    header .dot.live { background: #46d98a; box-shadow: 0 0 6px #46d98a99; }
+    header button { border: 0; background: transparent; color: var(--muted); cursor: pointer; width: 24px; height: 24px; padding: 0;
+      font-size: 12px; border-radius: calc(var(--r) * 6px); }
+    header button:hover, header button.on { background: var(--bg2); color: var(--fg); }
+    .log { flex: 1; overflow-y: auto; padding: 6px 0 8px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+    .empty { height: 100%; display: flex; align-items: center; justify-content: center; color: var(--muted); text-align: center; padding: 0 24px; }
+    .day { display: flex; align-items: center; gap: 8px; margin: 8px 12px 2px; color: var(--muted); font-size: .86em;
+      text-transform: uppercase; letter-spacing: .06em; }
+    .day::before, .day::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .msg { padding: 1px 12px; }
+    .msg.first { margin-top: 6px; }
+    .msg:hover { background: var(--bg2); }
+    .who { display: flex; align-items: baseline; gap: 6px; }
+    .name { font-weight: 650; }
+    .you { font-size: .82em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 3px; }
+    .time { font-size: .86em; color: var(--muted); }
+    .text { color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; }
+    form { display: flex; align-items: flex-end; gap: 6px; margin: 0 8px 8px; padding: 5px 5px 5px 10px; background: var(--bg2);
+      border: 1px solid var(--line); border-radius: calc(var(--r) * 10px); }
+    form:focus-within { border-color: #4a4378; }
+    .draft { flex: 1; min-width: 0; max-height: 84px; padding: 3px 0; border: 0; outline: none; resize: none; background: transparent;
+      color: var(--fg); line-height: 1.45; }
+    .draft::placeholder { color: var(--muted); }
+    form button { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: calc(var(--r) * 7px); background: var(--accent);
+      color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+    form button:disabled { background: var(--line); color: var(--muted); cursor: default; }
+    .prefs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .prefs h3 { margin: 0; font-size: .9em; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
     .prefs label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
-    .prefs label.range { flex-direction: column; gap: 4px; cursor: default; }
-    .prefs input[type=checkbox] { margin: 2px 0 0; accent-color: #4a4bdb; }
-    .prefs input[type=range] { width: 100%; accent-color: #4a4bdb; }
-    .prefs small { display: block; color: #6b6f85; font-size: 12px; }
-    .prefs button { align-self: flex-start; background: #fff; color: #4a4bdb; border: 1px solid #c9cde0; }
+    .prefs label.range { flex-direction: column; gap: 6px; cursor: default; }
+    .prefs input[type=checkbox] { margin: 2px 0 0; accent-color: var(--accent); }
+    .prefs input[type=range] { width: 100%; accent-color: var(--accent); }
+    .prefs small { display: block; color: var(--muted); font-size: .9em; }
+    .prefs .reset-position { align-self: flex-start; padding: 5px 10px; border: 1px solid var(--line); border-radius: calc(var(--r) * 8px);
+      background: var(--bg2); color: var(--fg); cursor: pointer; }
+    .prefs .reset-position:hover { border-color: #4a4378; }
     [hidden] { display: none !important; }
   </style>
   <div class="panel" hidden>
     <header>
       <span class="dot"></span>
-      <span class="title">Astroverse · Global</span>
+      <span class="title">astroverse<span class="chan">#global</span></span>
       <button class="prefs-btn" title="Settings" aria-label="Chat settings">⚙︎</button>
-      <button class="close" title="Minimize" aria-label="Minimize chat">–</button>
+      <button class="close" title="Minimize" aria-label="Minimize chat">✕</button>
     </header>
     <div class="prefs" hidden>
       <h3>Settings</h3>
@@ -107,14 +124,16 @@ root.innerHTML = `
         <span>Post anonymously<small class="anon-hint"></small></span></label>
       <label><input type="checkbox" class="pref-notifications">
         <span>Notify me about new messages<small>When the chat is closed or Satellite is in the background.</small></span></label>
+      <label class="range"><span>Font size <small class="fs-value"></small></span>
+        <input type="range" class="pref-fontsize" min="9" max="15" step="0.5"></label>
       <label class="range"><span>Roundness <small class="round-value"></small></span>
         <input type="range" class="pref-roundness" min="0" max="100" step="5"></label>
       <button class="reset-position">Reset bubble position</button>
     </div>
     <div class="log" role="log" aria-live="polite"></div>
     <form>
-      <input class="draft" maxlength="${MAX_LENGTH}" placeholder="Message" aria-label="Message">
-      <button type="submit">Send</button>
+      <textarea class="draft" rows="1" maxlength="${MAX_LENGTH}" placeholder="Message #global" aria-label="Message"></textarea>
+      <button type="submit" title="Send (Enter)" aria-label="Send">↑</button>
     </form>
   </div>
   <button class="bubble" aria-label="Open Astroverse chat" title="Astroverse chat">🪐<span class="badge" hidden></span></button>
@@ -204,6 +223,7 @@ function render() {
   log.hidden = form.hidden = showPrefs;
   $('.prefs-btn').classList.toggle('on', showPrefs);
   host.style.setProperty('--r', String(Math.min(100, Math.max(0, Number(config.roundness) || 0)) / 100));
+  host.style.setProperty('--fs', Math.min(15, Math.max(9, Number(config.fontSize) || 11)) + 'px');
   $('.dot').classList.toggle('live', status === 'online');
   $('.dot').title = { online: 'Connected to Satella', connecting: 'Connecting…', blocked: 'Blocked by the page' }[status] || 'Offline, retrying';
   $('.title').title = postName() ? 'Chatting as ' + postName() : 'Chatting anonymously';
@@ -213,38 +233,67 @@ function render() {
   $('.badge').textContent = unread > 99 ? '99+' : String(unread);
 }
 
+const GROUP_GAP = 5 * 60 * 1000;
+
+// A steady color per sender, so people are easy to tell apart.
+function nameColor(m) {
+  const seed = m.sender || m.name || '';
+  let hash = 0;
+  for (const c of seed) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  return `hsl(${hash % 360} 70% 74%)`;
+}
+
+function dayLabel(ms) {
+  const date = new Date(ms);
+  const today = new Date();
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
 function renderLog() {
   const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
   log.replaceChildren();
   if (!messages.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty';
-    empty.textContent = status === 'online' ? 'No messages yet. Say hi 👋'
-      : status === 'blocked' ? "This page's security policy blocks the Satella relay." : 'Connecting…';
-    log.append(empty);
+    log.append(el('div', 'empty', status === 'online' ? "It's quiet out here. Say hi 🛰"
+      : status === 'blocked' ? "This page's security policy blocks the Satella relay." : 'Connecting to Satella…'));
     return;
   }
+  let previous = null;
   for (const m of messages) {
-    const row = document.createElement('div');
-    row.className = 'msg' + (isMine(m) ? ' mine' : '');
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = (m.name || 'anonymous') + ' · ' + formatTime(m.time);
-    const text = document.createElement('div');
-    text.className = 'text';
-    text.textContent = m.text;
-    row.append(meta, text);
+    if (!previous || new Date(previous.time).toDateString() !== new Date(m.time).toDateString()) {
+      log.append(el('div', 'day', dayLabel(m.time)));
+      previous = null;
+    }
+    const grouped = previous && previous.sender === m.sender && previous.name === m.name && m.time - previous.time < GROUP_GAP;
+    const row = el('div', 'msg' + (grouped ? '' : ' first'));
+    row.title = new Date(m.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    if (!grouped) {
+      const who = el('div', 'who');
+      const name = el('span', 'name', m.name || 'anonymous');
+      name.style.color = nameColor(m);
+      who.append(name);
+      if (isMine(m)) who.append(el('span', 'you', 'you'));
+      who.append(el('span', 'time', formatTime(m.time)));
+      row.append(who);
+    }
+    row.append(el('div', 'text', m.text));
     log.append(row);
+    previous = m;
   }
   if (atBottom || open) log.scrollTop = log.scrollHeight;
 }
 
 function formatTime(ms) {
-  const date = new Date(ms);
-  const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  return date.toDateString() === new Date().toDateString()
-    ? time
-    : date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 async function markRead() {
@@ -277,6 +326,8 @@ function syncPrefs() {
   $('.pref-notifications').checked = Boolean(config.notifications);
   $('.pref-roundness').value = String(config.roundness);
   $('.round-value').textContent = config.roundness + '%';
+  $('.pref-fontsize').value = String(config.fontSize);
+  $('.fs-value').textContent = config.fontSize + 'px';
   $('.anon-hint').textContent = config.anonymous
     ? 'Your messages have no name.'
     : myName ? 'Unchecked: messages show as ' + myName + '.' : "Your OrgCS name couldn't be looked up, so messages have no name.";
@@ -303,6 +354,12 @@ $('.pref-roundness').addEventListener('input', (e) => {
   render();
 });
 $('.pref-roundness').addEventListener('change', (e) => savePref('roundness', Number(e.target.value)));
+$('.pref-fontsize').addEventListener('input', (e) => {
+  config.fontSize = Number(e.target.value);
+  syncPrefs();
+  render();
+});
+$('.pref-fontsize').addEventListener('change', (e) => savePref('fontSize', Number(e.target.value)));
 $('.reset-position').addEventListener('click', resetPosition);
 
 satellite.settings.onChange((key, value) => {
@@ -321,12 +378,25 @@ form.addEventListener('submit', (event) => {
   const message = { v: 1, id: crypto.randomUUID(), name: postName(), text, time: Date.now() };
   if (!client.send(CHANNEL, JSON.stringify(message))) {
     draft.placeholder = 'Not connected — try again';
-    setTimeout(() => { draft.placeholder = 'Message'; }, 3000);
+    setTimeout(() => { draft.placeholder = 'Message #global'; }, 3000);
     return;
   }
   draft.value = '';
+  fitDraft();
   addMessage({ ...message, sender: myKey }); // Satella echoes it back too; the id dedupes it
   draft.focus();
+});
+
+function fitDraft() {
+  draft.style.height = 'auto';
+  draft.style.height = Math.min(draft.scrollHeight, 84) + 'px';
+}
+draft.addEventListener('input', fitDraft);
+draft.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+    event.preventDefault();
+    form.requestSubmit();
+  }
 });
 
 // Lightning grabs some keystrokes globally; keep typing inside the chat.
