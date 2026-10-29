@@ -3,6 +3,9 @@
   "version": 1,
   "extensions": [
     {
+      "id": "astroverse"
+    },
+    {
       "id": "customer-sentinent-analysis"
     },
     {
