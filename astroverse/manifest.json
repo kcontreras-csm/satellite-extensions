@@ -1,0 +1,17 @@
+{
+  "$schema": ".satellite/manifest.schema.json",
+  "name": "Astroverse",
+  "version": "0.5.0",
+  "author": "Lywx",
+  "description": "Small global chat room in a floating, draggable bubble. Everyone shares one room on the Satella relay (the same one orgcs-remote uses), signed with their OrgCS name or anonymous.",
+  "matches": ["*:\/\/orgcs.lightning.force.com\/*"],
+  "js": ["satella.js", "content.js"],
+  "run_at": "document_idle",
+  "world": "isolated",
+  "permissions": ["storage", "salesforce", "notifications"],
+  "settings": [
+    { "key": "anonymous", "type": "boolean", "title": "Post anonymously", "description": "Send messages without your OrgCS name.", "default": false },
+    { "key": "notifications", "type": "boolean", "title": "Notify me about new messages", "description": "When the chat is closed or Satellite is in the background.", "default": true },
+    { "key": "roundness", "type": "number", "title": "Roundness", "description": "0 = square corners, 100 = fully round.", "min": 0, "max": 100, "default": 100 }
+  ]
+}
