@@ -1,6 +1,6 @@
 {
   "name": "Case Page Declutter",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "Daniela & Alex",
   "description": "Hides the Case icon and the \"Support Console\" app name (and optionally the org logo), makes sidebar cards and columns collapsible, adds console tab controls, shows the case description below the highlights, flags red accounts with a chip in the case header, and opens images in comments, posts and emails in a viewer (zoom, rotate, copy, download). Adds a follow-up clock to the header that counts your open cases whose next follow-up is due (Working every 2 days, Need More Information every 3 days with a closure warning after 7 days without a reply, open Structured Investigations every 3 days, high priority daily), with a pill on your case pages. Case lists get pills after each case number with its follow-up due time and a \"No summary\" pill on cases in Solution Provided or recently closed where the case AI summary wasn't generated.",
   "matches": [
