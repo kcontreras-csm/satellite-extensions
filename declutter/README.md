@@ -6,6 +6,23 @@ case description below the highlights, and flags red accounts with a chip in the
 follow-ups and flags cases whose case AI summary wasn't generated, described below. Everything can be turned off
 under Settings > Extensions > Case Page Declutter.
 
+## Image viewer
+
+Click an image in a case comment, feed post or email (Salesforce files and pasted images) to open it full screen:
+
+- **Zoom:** scroll or pinch, the − / + buttons or keys, double-click to switch between fit and actual size, `0` fit,
+  `1` actual size. Zooming keeps the point under the pointer in place.
+- **Move:** drag the image.
+- **Rotate:** `R` right, `Shift+R` left.
+- **Previous / next:** `←` / `→` through the other images of the same post or email.
+- **Copy** the image (`⌘C`, as a PNG, rotation included) or **Copy link**, **Download** (`⌘S`), or **Open** the
+  original in a new tab.
+- **Close:** `Esc`, ×, or click the dark area around it.
+
+Images inside links or buttons (file cards, profile pictures) keep Salesforce's own behaviour, and so does Cmd-click.
+Emails are shown in iframes from the same site, which are watched too. Turn it off under Settings > Extensions > Case
+Page Declutter (Open images in comments, posts and emails in a viewer).
+
 ## Pills in case lists
 
 In case lists (My Open Cases, closed case list views, related lists), your case numbers get pills right after them,
@@ -82,5 +99,6 @@ fetched and checked in the page. If the feed can't be read, only comments are ch
 
 ## Files
 
+- `imageviewer.js` is the image viewer.
 - `pills.js` draws the list pills; `followup.js` and `summary.js` hand it their pills.
 - `followup-core.js` holds the follow-up rules as plain functions, so they can be tested with Node.
