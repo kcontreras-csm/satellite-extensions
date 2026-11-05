@@ -1,20 +1,34 @@
-# Ticket Expiration
+# Case Page Declutter
 
-A Satellite extension (`ticket-expiration`) for OrgCS. It puts a clock next to the notification bell in the Salesforce
-header. The badge counts the open cases you own whose next follow-up is overdue (red), or due within a day (orange)
-when nothing is overdue. Click it to see every case with the cadence it falls under, what to do next, and when.
+A Satellite extension (`declutter`) for OrgCS. On case pages it hides the Case icon and the "Support Console" app
+name (and optionally the org logo), makes sidebar cards and columns collapsible, adds console tab controls, shows the
+case description below the highlights, and flags red accounts with a chip in the case header. It also tracks your
+follow-ups and flags cases whose case AI summary wasn't generated, described below. Everything can be turned off
+under Settings > Extensions > Case Page Declutter.
 
-Case lists show it too: in My Open Cases (and any other list view or related list with your cases in it), each of
-your case numbers gets a pill with the due time, red when late ("3d late"), orange within a day ("in 5h"), green
-otherwise ("in 2d"). Hover it for the next step, the rule and the exact due date.
+## Pills in case lists
 
-So do your case pages: a pill in front of Follow ("Follow-up 3d late"), same colours and tooltip. Click it to open
-the panel with that case highlighted.
+In case lists (My Open Cases, closed case list views, related lists), your case numbers get pills right after them,
+on the same line:
 
-Either can be turned off under Settings > Extensions > Ticket Expiration (Show due times in case lists, Show the
-follow-up on your case pages).
+- **The follow-up pill** (see below): the due time, red when late ("3d late"), orange within a day ("in 5h"), green
+  otherwise ("in 2d"). Hover it for the next step, the rule and the exact due date.
+- **"No summary"**: your cases in Solution Provided, and the ones closed in the last 30 days (setting), with no case
+  comment (public or internal) or feed post that starts with `--CASE AI SUMMARY GENERATED--`.
 
-## The cadence
+The case number never shrinks. If the Case Number column is too narrow, the pills are cut off instead (hover them for
+everything); drag the column wider once and Salesforce remembers it.
+
+## Follow-ups
+
+A clock next to the notification bell in the Salesforce header. The badge counts the open cases you own whose next
+follow-up is overdue (red), or due within a day (orange) when nothing is overdue. Click it to see every case with the
+cadence it falls under, what to do next, and when.
+
+Your case pages get a pill in front of Follow ("Follow-up 3d late"), same colours and tooltip. Click it to open the
+panel with that case highlighted.
+
+### The cadence
 
 From the team's follow-up practice. When several rules apply, the first one in this list wins:
 
@@ -29,11 +43,11 @@ From the team's follow-up practice. When several rules apply, the first one in t
 If the customer wrote after your last public update, the case is due one day after their message. In Need More
 Information, the next step becomes "answer them and move the case back to Working".
 
-All the numbers can be changed under Settings > Extensions > Ticket Expiration, along with whether weekends count
+All the numbers can be changed under Settings > Extensions > Case Page Declutter, along with whether weekends count
 (by default they do, so a Friday update on a 2-day cadence is due on Sunday) and whether you get a notification when
 a case becomes overdue.
 
-## Where the dates come from
+### Where the dates come from
 
 One read-only SOQL query (`satellite.salesforce.query`, signed in as you) every 5 minutes, when you open the panel,
 a few seconds after you click a button that saves (Save, Send, Share, Post, Comment, Submit, Update, Mark … Status),
@@ -52,10 +66,21 @@ status history and GUS links:
 
 Nothing is written to Salesforce. The only thing stored is which overdue cases you were already notified about.
 
-## Notes
+### Notes
 
 - Case numbers in the panel open the case. Lightning normally routes the link into a console tab; if it ever reloads
   the page instead, that is the browser following the link because Lightning didn't take it.
 - If the header can't be found, the clock shows up as a floating button in the bottom-right corner instead.
-- `followup-core.js` holds the rules as plain functions, so they can be tested with Node.
 - Errors and console output appear under Settings > Extensions > Logs.
+
+## Missing summary: where the data comes from
+
+Two read-only SOQL queries, one for case comments and one for feed posts, every 5 minutes, a few seconds after you
+click a button that saves (Save, Send, Post, Close, anything mentioning "summary"…), and right away when you click
+Lightning's refresh buttons. Comment and post bodies can't be filtered in SOQL, so the last 100 of each per case are
+fetched and checked in the page. If the feed can't be read, only comments are checked and a warning goes to the logs.
+
+## Files
+
+- `pills.js` draws the list pills; `followup.js` and `summary.js` hand it their pills.
+- `followup-core.js` holds the follow-up rules as plain functions, so they can be tested with Node.

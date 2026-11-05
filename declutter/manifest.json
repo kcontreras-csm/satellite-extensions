@@ -1,22 +1,152 @@
 {
   "name": "Case Page Declutter",
-  "version": "2.5.0",
+  "version": "3.0.0",
   "author": "Daniela & Alex",
-  "description": "Hides the Case icon and the \"Support Console\" app name (and optionally the org logo), makes sidebar cards and columns collapsible, adds console tab controls, shows the case description below the highlights, and flags red accounts with a chip in the case header.",
-  "matches": ["*://orgcs.lightning.force.com/*"],
-  "js": ["content.js", "tabs.js", "description.js", "branding.js", "redaccount.js"],
-  "css": ["branding.css"],
+  "description": "Hides the Case icon and the \"Support Console\" app name (and optionally the org logo), makes sidebar cards and columns collapsible, adds console tab controls, shows the case description below the highlights, and flags red accounts with a chip in the case header. Adds a follow-up clock to the header that counts your open cases whose next follow-up is due (Working every 2 days, Need More Information every 3 days with a closure warning after 7 days without a reply, open Structured Investigations every 3 days, high priority daily), with a pill on your case pages. Case lists get pills after each case number with its follow-up due time and a \"No summary\" pill on cases in Solution Provided or recently closed where the case AI summary wasn't generated.",
+  "matches": [
+    "*://orgcs.lightning.force.com/*"
+  ],
+  "js": [
+    "content.js",
+    "tabs.js",
+    "description.js",
+    "branding.js",
+    "redaccount.js",
+    "pills.js",
+    "followup-core.js",
+    "followup.js",
+    "summary.js"
+  ],
+  "css": [
+    "branding.css",
+    "followup.css"
+  ],
   "run_at": "document_idle",
   "world": "isolated",
-  "permissions": ["storage", "salesforce"],
+  "permissions": [
+    "storage",
+    "salesforce",
+    "notifications"
+  ],
   "settings": [
-    { "key": "hideAppName", "type": "boolean", "title": "Hide the app name (\"Support Console\")", "default": true },
-    { "key": "hideLogo", "type": "boolean", "title": "Hide the org logo in the global header", "default": false },
+    {
+      "key": "hideAppName",
+      "type": "boolean",
+      "title": "Hide the app name (\"Support Console\")",
+      "default": true
+    },
+    {
+      "key": "hideLogo",
+      "type": "boolean",
+      "title": "Hide the org logo in the global header",
+      "default": false
+    },
     {
       "key": "redAccountChip",
       "type": "boolean",
       "title": "Show a Red Account chip on case pages",
       "description": "Shown when the account had open red account issues when the case was created (the case's Open Red Account field).",
+      "default": true
+    },
+    {
+      "key": "missingSummaryPill",
+      "type": "boolean",
+      "title": "Mark cases without the case AI summary in case lists",
+      "description": "A \"No summary\" pill in case lists for your cases in Solution Provided, and the ones you closed recently, that have no comment or feed post starting with --CASE AI SUMMARY GENERATED--.",
+      "default": true
+    },
+    {
+      "key": "missingSummaryClosedDays",
+      "type": "number",
+      "title": "Missing summary: also check cases closed in the last (days)",
+      "description": "0 checks Solution Provided cases only.",
+      "default": 30,
+      "min": 0,
+      "max": 365
+    },
+    {
+      "key": "highPriority",
+      "type": "choice",
+      "title": "Follow-ups: High priority (daily follow-up)",
+      "description": "Which severities get a follow-up every day. Escalated cases always do.",
+      "options": [
+        {
+          "value": "sev12",
+          "label": "Severity Level 1 and 2 (Critical, Urgent)"
+        },
+        {
+          "value": "sev123",
+          "label": "Severity Level 1 to 3 (also High)"
+        }
+      ],
+      "default": "sev12"
+    },
+    {
+      "key": "workingDays",
+      "type": "number",
+      "title": "Follow-ups: Working: an update every (days)",
+      "default": 2,
+      "min": 1,
+      "max": 14
+    },
+    {
+      "key": "waitingDays",
+      "type": "number",
+      "title": "Follow-ups: Need More Information: follow up every (days)",
+      "default": 3,
+      "min": 1,
+      "max": 14
+    },
+    {
+      "key": "closeWarningDays",
+      "type": "number",
+      "title": "Follow-ups: Need More Information: closure warning after (days without a reply)",
+      "description": "The warning tells the customer the case closes in 48 hours without a reply; 48 hours later the case is due to be closed.",
+      "default": 7,
+      "min": 1,
+      "max": 30
+    },
+    {
+      "key": "siDays",
+      "type": "number",
+      "title": "Follow-ups: Open Structured Investigation: a note every (days)",
+      "default": 3,
+      "min": 1,
+      "max": 14
+    },
+    {
+      "key": "idleDays",
+      "type": "number",
+      "title": "Follow-ups: Any other status: activity at least every (days)",
+      "default": 3,
+      "min": 1,
+      "max": 14
+    },
+    {
+      "key": "skipWeekends",
+      "type": "boolean",
+      "title": "Follow-ups: skip weekends",
+      "description": "Off: days are calendar days, so a case updated on Friday with a 2-day cadence is due on Sunday. On: due dates skip Saturday and Sunday.",
+      "default": false
+    },
+    {
+      "key": "notify",
+      "type": "boolean",
+      "title": "Follow-ups: notify me when a case becomes overdue",
+      "default": true
+    },
+    {
+      "key": "listPills",
+      "type": "boolean",
+      "title": "Follow-ups: show due times in case lists",
+      "description": "A pill with the due time in My Open Cases and other case lists. Hover it for the next step.",
+      "default": true
+    },
+    {
+      "key": "casePill",
+      "type": "boolean",
+      "title": "Follow-ups: show the follow-up on your case pages",
+      "description": "A pill in front of Follow on cases you own, with the due time; hover it for the next step, click it for the panel.",
       "default": true
     }
   ]

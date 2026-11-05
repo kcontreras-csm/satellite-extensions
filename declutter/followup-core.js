@@ -152,6 +152,6 @@
     cases.map(c => evaluate(c, options, now)).sort((x, y) => x.due - y.due);
 
   const core = { DEFAULTS, HOUR, DAY, time, addDays, isHighPriority, openInvestigations, activity, evaluate, evaluateAll };
-  globalThis.TicketExpirationCore = core;
+  globalThis.DeclutterFollowupCore = core;
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
 })();

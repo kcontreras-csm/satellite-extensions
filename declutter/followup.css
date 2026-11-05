@@ -1,5 +1,5 @@
 /* The header button lives in Salesforce's own DOM, so it is styled here. The panel has its own shadow root. */
-.ticket-expiration-button {
+.sat-followup-button {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -8,10 +8,10 @@
   height: 2rem;
   color: #747474;
 }
-.ticket-expiration-button:hover,
-.ticket-expiration-button[aria-expanded="true"] { color: #0176d3; }
-.ticket-expiration-button svg { width: 1.25rem; height: 1.25rem; }
-.ticket-expiration-badge {
+.sat-followup-button:hover,
+.sat-followup-button[aria-expanded="true"] { color: #0176d3; }
+.sat-followup-button svg { width: 1.25rem; height: 1.25rem; }
+.sat-followup-badge {
   position: absolute;
   top: -.125rem;
   right: -.375rem;
@@ -25,10 +25,10 @@
   text-align: center;
   pointer-events: none;
 }
-.ticket-expiration-badge.soon { background: #dd7a01; }
-.ticket-expiration-badge[hidden] { display: none; }
+.sat-followup-badge.soon { background: #dd7a01; }
+.sat-followup-badge[hidden] { display: none; }
 /* Only when the header isn't there to hold the button. */
-.ticket-expiration-floating {
+.sat-followup-floating {
   position: fixed;
   z-index: 2147482000;
   right: 16px;

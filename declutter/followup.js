@@ -1,22 +1,21 @@
-// Ticket Expiration: a clock in the OrgCS header that counts the open cases you own whose next follow-up is due.
-// Clicking it lists every case with the cadence it falls under, what to do next and by when. Case lists (My Open
-// Cases and the like) get a pill with the due time next to each case number, and your case pages one next to Follow.
-// The rules live in followup-core.js; this file queries the cases, draws the button, panel and pills, and sends
-// notifications.
+// Case Page Declutter: a clock in the OrgCS header that counts the open cases you own whose next follow-up is due.
+// Clicking it lists every case with the cadence it falls under, what to do next and by when. Case lists get a pill
+// with the due time after the case number (pills.js), and your case pages one next to Follow.
+// The rules live in followup-core.js; this file queries the cases, draws the button, panel and case page pill, and
+// sends notifications.
 // Cases come from one read-only SOQL query (satellite.salesforce.query, signed in as you), refreshed every few
 // minutes and when the panel opens. Errors and console output appear in Settings > Extensions > Logs.
-
-const TAG = '[ticket-expiration]';
-const Core = globalThis.TicketExpirationCore;
+// Wrapped in its own scope so nothing here can clash with the other scripts.
+(async () => {
+const TAG = '[declutter] follow-ups';
+const Core = globalThis.DeclutterFollowupCore;
 const REFRESH_MS = 5 * 60e3;
 const TICK_MS = 60e3;
 const STALE_MS = 30e3;
-const NOTIFIED_KEY = 'notified';
+const NOTIFIED_KEY = 'followupNotified';
 const CASE_PATH = /\/lightning\/r\/(?:Case\/)?(500[a-zA-Z0-9]{12}(?:[a-zA-Z0-9]{3})?)(?:\/|$)/;
-const LINK_ID = /\/(500[a-zA-Z0-9]{12}(?:[a-zA-Z0-9]{3})?)(?:[/?#]|$)/;
-const HOST_ATTR = 'data-ticket-expiration';
-const PILL_ATTR = 'data-ticket-expiration-pill';
-const CASE_ATTR = 'data-ticket-expiration-case';
+const HOST_ATTR = 'data-sat-followup';
+const CASE_ATTR = 'data-sat-followup-case';
 const PILL_MS = 400;
 // Buttons that save something the rules read (a comment, an email, a status) and Lightning's own refresh buttons.
 const SAVE_LABEL = /^(save\b.*|send|share|post|comment|submit|update|mark\b.*)$/i;
@@ -99,9 +98,8 @@ const PANEL = `
     <footer><details><summary class="updated"></summary><ul class="rules"></ul></details></footer>
   </section>`;
 
-// The pills sit inside Lightning's shadow roots, where style.css doesn't reach, so they carry their own styles.
-const PILL_CSS = 'display:inline-block;margin-left:6px;padding:0 6px;border-radius:9px;vertical-align:middle;' +
-  "white-space:nowrap;cursor:default;font:600 11px/18px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;";
+// The case page pill sits inside Lightning's shadow roots, where followup.css doesn't reach, so it carries its own
+// styles. The colours are the list pills' too.
 const PILL_COLORS = {
   overdue: 'background:#feded8;color:#8e030f;',
   soon: 'background:#fef1d6;color:#8c4b02;',
@@ -201,15 +199,15 @@ const sameId = (a, b) => !!a && !!b && a.slice(0, 15) === b.slice(0, 15);
 
 const button = document.createElement('button');
 button.type = 'button';
-button.className = 'slds-button slds-button_icon slds-global-actions__item-action ticket-expiration-button';
-button.innerHTML = CLOCK + '<span class="ticket-expiration-badge" hidden></span>';
+button.className = 'slds-button slds-button_icon slds-global-actions__item-action sat-followup-button';
+button.innerHTML = CLOCK + '<span class="sat-followup-badge" hidden></span>';
 button.setAttribute('aria-expanded', 'false');
 button.title = 'Case follow-ups';
 button.addEventListener('click', () => (isOpen() ? closePanel() : openPanel()));
 const headerItem = document.createElement('li');
-headerItem.className = 'slds-global-actions__item ticket-expiration-item';
+headerItem.className = 'slds-global-actions__item sat-followup-item';
 const floating = document.createElement('div');
-floating.className = 'ticket-expiration-floating';
+floating.className = 'sat-followup-floating';
 const startedAt = Date.now();
 
 // The header re-renders now and then, so this runs every second and puts the button back.
@@ -233,7 +231,7 @@ function updateButton() {
   const soon = count('soon');
   // A failed refresh keeps the last counts; only a first load that failed shows "!".
   const failed = !!state.error && !state.fetchedAt;
-  const badge = button.querySelector('.ticket-expiration-badge');
+  const badge = button.querySelector('.sat-followup-badge');
   badge.hidden = !failed && !overdue && !soon;
   badge.textContent = failed ? '!' : String(overdue || soon);
   badge.classList.toggle('soon', !failed && !overdue);
@@ -387,22 +385,13 @@ function rules() {
 
 // MARK: Pills in case lists and case pages
 
-// Every link in a table row whose text is one of your case numbers gets a pill: My Open Cases, other case list
-// views, related lists. When the link carries a record Id it has to match too, so a subject like "Reopen case
-// 474519956" doesn't get one. Your case pages get a bigger one in front of Follow.
+// Case lists get theirs from pills.js (publishPills). Your case pages get a bigger one in front of Follow.
 const observed = new WeakSet();
 const observer = new MutationObserver(schedulePills);
 let pillTimer = 0;
 let pillsShown = false;
 
-const parentOf = node => (node.parentNode?.nodeType === 11 ? node.parentNode.host : node.parentNode);
 const visible = el => el.getClientRects().length > 0;
-const linkId = link => LINK_ID.exec(link.getAttribute('href') || '')?.[1] || link.dataset.recordid || null;
-
-function composedClosest(el, selector) {
-  for (let node = el; node; node = parentOf(node)) if (node.nodeType === 1 && node.matches(selector)) return node;
-  return null;
-}
 
 // Every shadow root on the page, each observed so re-rendered rows get their pill back.
 function collectRoots() {
@@ -425,28 +414,23 @@ function schedulePills() {
   }, PILL_MS);
 }
 
+// The list pills are drawn by pills.js; this hands them over whenever the cases or the time change.
+function publishPills(now) {
+  const pills = new Map(state.options.listPills ? state.items.map(i => {
+    const { text, title } = pillText(i, now, false);
+    return [i.number, { id: i.id, text, title, style: PILL_COLORS[i.state] }];
+  }) : []);
+  globalThis.DeclutterPills?.set('followup', pills);
+}
+
 function paintPills() {
-  if (!state.items.length && !pillsShown) return;
   const now = Date.now();
-  const byNumber = new Map(state.options.listPills ? state.items.map(i => [i.number, i]) : []);
+  publishPills(now);
+  if (!state.options.casePill && !pillsShown) return;
   const roots = collectRoots();
   const kept = new Set();
-  for (const root of roots) {
-    if (byNumber.size) {
-      for (const link of root.querySelectorAll('a')) {
-        const item = byNumber.get(normalize(link.textContent)) || byNumber.get(link.getAttribute('title'));
-        if (!item || (linkId(link) && !sameId(linkId(link), item.id)) || !composedClosest(link, 'tr, [role="row"]')) continue;
-        let pill = link.nextElementSibling;
-        if (!pill?.hasAttribute(PILL_ATTR)) {
-          pill = document.createElement('span');
-          pill.setAttribute(PILL_ATTR, '');
-          link.after(pill);
-        }
-        paintPill(pill, item, now, false);
-        kept.add(pill);
-      }
-    }
-    if (state.options.casePill) {
+  if (state.options.casePill) {
+    for (const root of roots) {
       for (const highlights of root.querySelectorAll('records-highlights2')) {
         const pill = paintCasePage(highlights, now);
         if (pill) kept.add(pill);
@@ -454,7 +438,7 @@ function paintPills() {
     }
   }
   for (const root of roots) {
-    for (const pill of root.querySelectorAll(`[${PILL_ATTR}], [${CASE_ATTR}]`)) if (!kept.has(pill)) pill.remove();
+    for (const pill of root.querySelectorAll(`[${CASE_ATTR}]`)) if (!kept.has(pill)) pill.remove();
   }
   pillsShown = kept.size > 0;
 }
@@ -462,7 +446,7 @@ function paintPills() {
 // The console keeps every open tab's case page around, hidden. Only the one on screen is the case in the address
 // bar; the others keep the pill they got while they were in front, and it is brought up to date when they are again.
 function paintCasePage(highlights, now) {
-  // Case panels only, recognised by their subject component (as Fake Swarm and Case Page Declutter do).
+  // Case panels only, recognised by their subject component (as Fake Swarm and redaccount.js do).
   if (!highlights.querySelector('support-output-case-subject-field')) return null;
   const scope = highlights.shadowRoot || highlights;
   const existing = scope.querySelector(`[${CASE_ATTR}]`);
@@ -485,12 +469,11 @@ function paintCasePage(highlights, now) {
     pill.addEventListener('click', () => (isOpen() ? closePanel() : openPanel()));
   }
   if (pill.nextElementSibling !== slot) slot.before(pill);
-  paintPill(pill, item, now, true);
+  paintPill(pill, item, now);
   return pill;
 }
 
-// Only what changed is written, so the observer doesn't wake itself up.
-function paintPill(pill, item, now, onCase) {
+function pillText(item, now, onCase) {
   const when = item.due <= now ? `${short(now - item.due)} late` : `in ${short(item.due - now)}`;
   const due = dueText(item, now);
   const lines = [
@@ -499,16 +482,20 @@ function paintPill(pill, item, now, onCase) {
   ];
   if (item.replied) lines.push(`Customer ${item.lastPublic ? 'replied' : 'wrote'} ${ago(item.lastCustomer, now)}`);
   if (onCase) lines.push('Click for all your follow-ups.');
-  const text = onCase ? `Follow-up ${when}` : when;
-  const title = lines.join('\n');
+  return { text: onCase ? `Follow-up ${when}` : when, title: lines.join('\n') };
+}
+
+// Only what changed is written, so the observer doesn't wake itself up.
+function paintPill(pill, item, now) {
+  const { text, title } = pillText(item, now, true);
   if (pill.textContent !== text) pill.textContent = text;
   if (pill.title !== title) {
     pill.title = title;
-    if (onCase) pill.setAttribute('aria-label', title);
+    pill.setAttribute('aria-label', title);
   }
   if (pill.dataset.state !== item.state) {
     pill.dataset.state = item.state;
-    pill.style.cssText = (onCase ? CASE_PILL_CSS + CASE_PILL_BORDERS[item.state] : PILL_CSS) + PILL_COLORS[item.state];
+    pill.style.cssText = CASE_PILL_CSS + CASE_PILL_BORDERS[item.state] + PILL_COLORS[item.state];
   }
 }
 
@@ -555,3 +542,4 @@ if (window.top === window) {
   addEventListener('click', onPageClick, true);
   refresh();
 }
+})();
