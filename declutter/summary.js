@@ -1,11 +1,13 @@
-// Case Page Declutter: a red "No summary" pill after the case number in case lists (pills.js), for each of your cases
-// where the case AI summary wasn't generated, that is, with no case comment (public or internal) or feed post that
-// starts with "--CASE AI SUMMARY GENERATED--". It checks cases you own in Solution Provided and the ones closed in the
-// last few days (setting). Comment and post bodies can't be filtered in SOQL, so they are read and checked here.
+// Case Page Declutter: a red "No summary" pill after the case number in case lists (pills.js), for each of your
+// cases where the case AI summary wasn't generated, that is, with no case comment (public or internal) or feed post
+// that starts with "--CASE AI SUMMARY GENERATED--" or "Here’s the summary of the case:". It checks cases you own in
+// Solution Provided and the ones closed in the last few days (setting). Comment and post bodies can't be filtered in
+// SOQL, so they are read and checked here.
 // Wrapped in its own scope so nothing here can clash with the other scripts.
 (() => {
   const REFRESH_MS = 5 * 60e3;
-  const MARKER = /^\s*-{2,}\s*case ai summary generated\s*-{2,}/i;
+  // Either header counts; the apostrophe may be straight or curly.
+  const MARKER = /^\s*(?:-{2,}\s*case ai summary generated\s*-{2,}|here[’']s the summary of the case\s*:)/i;
   const PILL_STYLE = 'background:#feded8;color:#8e030f;';
   const SAVE_LABEL = /^(save\b.*|send|share|post|comment|submit|update|mark\b.*|close\b.*)$/i;
   const REFRESH_LABEL = /^refresh\b/i;
@@ -27,7 +29,8 @@
 
   const normalize = value => String(value ?? '').replace(/\s+/g, ' ').trim();
   // Feed posts are rich text ("<p>--CASE AI SUMMARY GENERATED--</p>…").
-  const plain = value => String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ');
+  const plain = value => String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ')
+    .replace(/&rsquo;|&#8217;|&#x2019;/gi, '’').replace(/&#39;|&apos;|&#x27;/gi, "'");
   const marked = (rows, field) => (rows?.records || []).some(r => MARKER.test(plain(r[field])));
 
   let enabled = true;
@@ -39,7 +42,7 @@
 
   function pill(c) {
     const title = `${c.IsClosed ? 'Closed' : 'In Solution Provided'} without the case AI summary: ` +
-      'no comment or post starts with --CASE AI SUMMARY GENERATED--.';
+      'no comment or post starts with --CASE AI SUMMARY GENERATED-- or “Here’s the summary of the case:”.';
     return { id: c.Id, text: 'No summary', title, style: PILL_STYLE };
   }
 

@@ -31,7 +31,7 @@ on the same line:
 - **The follow-up pill** (see below): the due time, red when late ("3d late"), orange within a day ("in 5h"), green
   otherwise ("in 2d"). Hover it for the next step, the rule and the exact due date.
 - **"No summary"**: your cases in Solution Provided, and the ones closed in the last 30 days (setting), with no case
-  comment (public or internal) or feed post that starts with `--CASE AI SUMMARY GENERATED--`.
+  comment (public or internal) or feed post that starts with `--CASE AI SUMMARY GENERATED--` or `Here’s the summary of the case:`.
 
 The case number never shrinks. If the Case Number column is too narrow, the pills are cut off instead (hover them for
 everything); drag the column wider once and Salesforce remembers it.
